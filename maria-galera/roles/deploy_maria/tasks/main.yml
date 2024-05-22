@@ -1,0 +1,32 @@
+---
+- selinux:
+    policy: targeted
+    state: permissive
+
+- name: Push MariaDB Repo
+  copy: src=maria.repo dest=/etc/yum.repos.d
+  notify:
+   - dnf_clean
+
+- meta: flush_handlers
+
+- name: install MariaDB PKGS
+  dnf: 
+   name: 
+    - mariadb-server
+    - mariadb-client
+  state: latest
+
+- name: Enable and Start MariaDB service 
+  systemd: name=mariadb enabled=yes state=started
+
+- name: Allow mariaDB Port
+  firewalld:
+   port: 3306/tcp
+   zone: public
+   state: enabled
+   permanent: true
+  notify:
+   - firewall_reload
+   - stop_maria
+- meta: flush_handlers

@@ -1,0 +1,37 @@
+---
+- name: Install Galera PKGS
+  dnf:
+   - galera
+   - rsync
+  state: latest
+
+- name: Allow Galera Ports
+  firewalld:
+   port: "{{ item }}"
+   zone: public
+   state: enabled
+   permanent: true
+  loop:
+   - 4567/tcp
+   - 4567/udp
+   - 4568/tcp
+   - 4444/tcp
+
+  notify:
+   - firewall_reload
+ 
+- meta: flush_handlers
+
+- name: Push Galera Config File
+  template: src=galera.cnf.j2 dest=/etc/my.cnf.d/galera.cnf
+
+- name: Start Galera Cluster
+  command: galera_new_cluster
+  when: ansible_host == "192.168.10.11"
+
+- name: Start MariaDB on DB2 Server
+  systemctl: name=mariadb state=started
+  when: ansible_host == "192.168.10.12"
+
+
+
